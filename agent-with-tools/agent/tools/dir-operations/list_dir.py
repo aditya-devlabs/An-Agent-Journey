@@ -3,22 +3,18 @@ from pydantic import BaseModel
 from agent.tools.base import Tool
 
 class ListDirArgs(BaseModel):
-    path: str
+    path: str = "." # calls the project root by default
 
 class ListDirTool(Tool):
     name = "list_dir"
-    description = ("Lists all the directories ")
+    description = ("List the immediate files and subdirectories inside a directory.")
 
     args_schema = ListDirArgs
 
     async def execute(self, args: ListDirArgs):
         
-        project_root = Path.cwd()
-        dir_path = (project_root / args.path).resolve()
-
-        if project_root not in dir_path.parents and dir_path != project_root:
-            raise ValueError("Cannot access files outside the project.")
-
+        dir_path = self.resolve_project_path(args.path)
+        
         if not dir_path.exists():
             raise FileNotFoundError(f"{args.path} does not exist.")
  
@@ -35,4 +31,8 @@ class ListDirTool(Tool):
             elif item.is_file():
                 files.append(item.name)
         
-        
+        return {
+            "path": args.path,
+            "directories": sorted(directories),
+            "files": sorted(files)
+        }

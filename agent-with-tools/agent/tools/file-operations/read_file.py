@@ -14,11 +14,7 @@ class ReadFileTool(Tool):
 
     async def execute(self, args: ReadFileArgs):
         
-        project_root = Path.cwd()
-        file_path = (project_root / args.path).resolve()
-
-        if project_root not in file_path.parents and file_path != project_root:
-            raise ValueError("Cannot access files outside the project.")
+        file_path = self.resolve_project_path(args.path)
 
         if not file_path.exists():
             raise FileNotFoundError(f"{args.path} does not exist.")
