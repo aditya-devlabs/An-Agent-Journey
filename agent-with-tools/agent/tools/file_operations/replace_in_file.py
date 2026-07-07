@@ -53,6 +53,7 @@ class ReplaceFileTool(Tool):
 
         return {
             "path": args.path,
+            "modified_files": [args.path],
             "found_string": args.find,
             "replaced_with": args.replace,
             "occurrences_replaced": replaced_count,

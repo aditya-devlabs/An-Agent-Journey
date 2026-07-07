@@ -3,6 +3,7 @@ from agent.tools.file_operations.write_file import WriteFileTool
 from agent.tools.file_operations.replace_in_file import ReplaceFileTool
 from agent.tools.dir_operations.list_dir import ListDirTool
 from agent.tools.dir_operations.create_dir import CreateDirTool
+from agent.tools.dir_operations.list_dir_recursive import ListDirRecursiveTool
 
 
 TOOLS = {
@@ -11,4 +12,5 @@ TOOLS = {
     "replace_in_file": ReplaceFileTool(),
     "list_dir": ListDirTool(),
     "create_dir": CreateDirTool(),
+    "list_dir_recursive": ListDirRecursiveTool(),
 }

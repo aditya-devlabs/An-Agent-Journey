@@ -36,5 +36,6 @@ class WriteFileTool(Tool):
         return {
             "path": args.path,
             "mode": args.mode,
+            "modified_files": [args.path],
             "bytes_written": len(args.content),
         }

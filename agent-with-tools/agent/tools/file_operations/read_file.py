@@ -29,6 +29,7 @@ class ReadFileTool(Tool):
             return {
                 "path": args.path,
                 "content": content,
+                "modified_files": [],
             }
 
         except UnicodeDecodeError:

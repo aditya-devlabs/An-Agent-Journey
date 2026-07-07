@@ -38,5 +38,6 @@ class CreateDirTool(Tool):
         return {
             "parent": args.path,
             "directory": args.directory_name,
+            "modified_files": [],
             "created_path": str(new_path.relative_to(project_root)),
         }
