@@ -74,10 +74,12 @@ class WorkerAgent:
             print("Calling LLM...")
             response = await self._call_llm(messages)
             print("Response:::::::", response)
-            message = response.choices[0].message
 
             tool_calls: list[ToolCall] | None = None
             try:
+                if not response.choices:
+                    raise InvalidAssistantResponseError("No choices returned by LLM")
+                message = response.choices[0].message
                 assistant_response = self._validate_assistant_response(message)
 
                 if assistant_response.tool_calls is None:
