@@ -1,0 +1,96 @@
+/* style.css - Basic styling for Whack-a-Mole game */
+
+/* Reset and basic page styles */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: #f0f8ff; /* Light background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    color: #333;
+}
+
+#game-container {
+    text-align: center;
+    max-width: 600px;
+    width: 100%;
+}
+
+h1 {
+    margin-bottom: 0.5rem;
+    font-size: 2rem;
+    color: #2c3e50;
+}
+
+#score {
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #e74c3c;
+}
+
+/* Grid layout for the holes */
+#grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-gap: 12px;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* Each hole – a square that will contain a mole */
+.hole {
+    position: relative;
+    width: 100%;
+    /* Keep squares – use padding-top trick */
+    padding-top: 100%;
+    background-color: #8bc34a; /* grassy hole colour */
+    border-radius: 50%;
+    overflow: hidden;
+    cursor: pointer;
+    box-shadow: inset 0 -5px 10px rgba(0,0,0,0.2);
+}
+
+/* Mole – hidden by default; positioned absolutely inside .hole */
+.mole {
+    position: absolute;
+    top: 10%;
+    left: 10%;
+    width: 80%;
+    height: 80%;
+    background-color: #795548; /* brown mole */
+    border-radius: 50%;
+    display: none; /* will be toggled via JS */
+    /* Simple eye detail */
+    box-shadow:
+        inset 5px 5px 0 rgba(255,255,255,0.5),
+        inset -5px -5px 0 rgba(0,0,0,0.2);
+}
+
+/* When the hole is active (mole visible) */
+.hole.active .mole {
+    display: block;
+}
+
+/* Optional visual feedback when a mole is whacked */
+.hole.hit {
+    animation: hitFlash 0.3s ease-out;
+}
+
+@keyframes hitFlash {
+    from {background-color: #ffeb3b;}
+    to {background-color: #8bc34a;}
+}
+
+/* Responsive tweaks */
+@media (max-width: 500px) {
+    #grid {
+        max-width: 300px;
+        grid-gap: 8px;
+    }
+    h1 {font-size: 1.5rem;}
+    #score {font-size: 1.2rem;}
+}

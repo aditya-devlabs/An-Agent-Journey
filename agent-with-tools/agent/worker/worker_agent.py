@@ -223,19 +223,3 @@ class WorkerAgent:
             return assistant_response
         except ValidationError as e:
             raise InvalidAssistantResponseError(str(e)) from e
-
-
-agent = WorkerAgent(worker_client, TOOLS)
-
-
-task = Task(goal="Find the folder named todo, Create a todo application(html,css and js files) with localstorage persistence. Use dark color theme and a switch to switch to light theme with muted colors.")
-
-
-asyncio.run(agent.run(task))
-# All four operations work:
-# Operation	old_string	new_string
-# Replace	existing code	new code
-# Insert	anchor line (unique)	anchor line + \n + new code
-# Delete	code to remove	"" (empty)
-# Batch rename	text	new text with replace_all=True
-# And it guards against ambiguity — if old_string matches >1 time, it errors asking for more context, rather than silently picking the wrong spot.

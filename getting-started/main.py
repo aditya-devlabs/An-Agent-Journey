@@ -4,14 +4,15 @@ import math
 import random
 import os
 from dotenv import load_dotenv
-from cerebras.cloud.sdk import Cerebras
+from openai import OpenAI
 import sys
 
 load_dotenv()
 
 
-client = Cerebras(
-    api_key=os.getenv("cerebras_api_key"),
+client = OpenAI(
+    base_url="https://integrate.api.nvidia.com/v1",
+    api_key=os.getenv("NVIDIA_API_KEY"),
 )
 
 Path("memory.json").touch(exist_ok=True)

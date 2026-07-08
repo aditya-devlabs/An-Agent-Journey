@@ -1,6 +1,6 @@
 # CLI Chatbot with Memory
 
-Just a small project I made while playing around with the Cerebras API.
+Just a small project I made while playing around with the NVIDIA NIM API.
 
 It supports:
 - Starting new conversations
@@ -19,13 +19,13 @@ uv sync
 Install dependencies:
 
 ```bash
-uv add python-dotenv cerebras-cloud-sdk
+uv add python-dotenv openai
 ``` 
 
 Create a `.env` file:
 
 ```env
-cerebras_api_key=YOUR_API_KEY
+NVIDIA_API_KEY=YOUR_API_KEY
 ```
 
 Then run:
