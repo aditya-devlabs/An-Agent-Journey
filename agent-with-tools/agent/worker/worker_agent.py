@@ -55,13 +55,17 @@ class WorkerAgent:
 
     async def _call_llm(self, messages):
         try:
-            response = await asyncio.to_thread(self._llm.chat.completions.create, messages=messages, model="gpt-oss-120b", tools=self._build_tools())
+            response = await asyncio.to_thread(
+                self._llm.chat.completions.create,
+                messages=messages,
+                model="gpt-oss-120b",
+                tools=self._build_tools(),
+            )
             return response
         except Exception as e:
             print(type(e))
             print(e)
             raise
-
 
     async def _executor(self, messages):
         retries = 0
@@ -72,8 +76,6 @@ class WorkerAgent:
             print("Response:::::::", response)
             message = response.choices[0].message
 
-
-
             tool_calls: list[ToolCall] | None = None
             try:
                 assistant_response = self._validate_assistant_response(message)
@@ -81,7 +83,7 @@ class WorkerAgent:
                 if assistant_response.tool_calls is None:
                     return message, list(modified_files)
 
-                tool_calls= assistant_response.tool_calls
+                tool_calls = assistant_response.tool_calls
                 messages.append(
                     {
                         "role": "assistant",
@@ -210,7 +212,11 @@ class WorkerAgent:
             assistant_response = AssistantResponse.model_validate(
                 {
                     "content": message.content,
-                    "tool_calls": [tc.model_dump() for tc in message.tool_calls] if message.tool_calls else None,
+                    "tool_calls": (
+                        [tc.model_dump() for tc in message.tool_calls]
+                        if message.tool_calls
+                        else None
+                    ),
                 }
             )
 
@@ -222,7 +228,14 @@ class WorkerAgent:
 agent = WorkerAgent(worker_client, TOOLS)
 
 
-task = Task(goal="List all the files in the project.")
+task = Task(goal="can you find the index.html, read what is written in it and improve on it please")
 
 
 asyncio.run(agent.run(task))
+# All four operations work:
+# Operation	old_string	new_string
+# Replace	existing code	new code
+# Insert	anchor line (unique)	anchor line + \n + new code
+# Delete	code to remove	"" (empty)
+# Batch rename	text	new text with replace_all=True
+# And it guards against ambiguity — if old_string matches >1 time, it errors asking for more context, rather than silently picking the wrong spot.

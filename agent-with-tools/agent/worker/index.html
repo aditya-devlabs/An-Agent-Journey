@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo App</title>
+    <style>
+        body {font-family: Arial, Helvetica, sans-serif; margin: 2rem;}
+        #todo-form {display: flex; gap: 0.5rem; margin-bottom: 1rem;}
+        #todo-input {flex: 1; padding: 0.5rem;}
+        #todo-list {list-style: none; padding: 0;}
+        .todo-item {display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-bottom: 1px solid #ddd;}
+        .todo-item button {background: none; border: none; color: red; cursor: pointer; font-size: 1rem;}
+    </style>
+</head>
+<body>
+    <h1>Todo List</h1>
+    <form id="todo-form">
+        <input id="todo-input" type="text" placeholder="Enter a new todo" required />
+        <button type="submit">Add</button>
+    </form>
+    <ul id="todo-list"></ul>
+
+    <script>
+        document.getElementById('todo-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const input = document.getElementById('todo-input');
+            const text = input.value.trim();
+            if (!text) return;
+            const li = document.createElement('li');
+            li.className = 'todo-item';
+            li.innerHTML = `${text}<button type="button" onclick="this.parentElement.remove()">✖</button>`;
+            document.getElementById('todo-list').appendChild(li);
+            input.value = '';
+        });
+    </script>
+</body>
+</html>

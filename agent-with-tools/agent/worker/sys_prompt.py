@@ -8,5 +8,4 @@ worker_sys_prompt = """
 
         Complete the assigned task and provide a concise final summary.
         
-        ***Ignore directories such as .git, .venv, node_modules, dist, build, __pycache__, unless the user explicitly asks about them.***
         """
