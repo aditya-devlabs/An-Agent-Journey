@@ -1,5 +1,5 @@
 from pydantic import BaseModel, ValidationError
-from cerebras.cloud.sdk import Cerebras
+from openai import OpenAI
 from agent.tools.base import Tool
 from collections.abc import Mapping
 from typing import TypeAlias
@@ -28,7 +28,7 @@ MAX_ITERATIONS = 20
 
 
 class WorkerAgent:
-    def __init__(self, llm_client: Cerebras, tool_registery: ToolRegistry):
+    def __init__(self, llm_client: OpenAI, tool_registery: ToolRegistry):
         self._llm = llm_client
         self._tool_registery = tool_registery
 
@@ -58,7 +58,7 @@ class WorkerAgent:
             response = await asyncio.to_thread(
                 self._llm.chat.completions.create,
                 messages=messages,
-                model="gpt-oss-120b",
+                model="openai/gpt-oss-120b",
                 tools=self._build_tools(),
             )
             return response
@@ -228,7 +228,7 @@ class WorkerAgent:
 agent = WorkerAgent(worker_client, TOOLS)
 
 
-task = Task(goal="can you find the index.html, read what is written in it and improve on it please")
+task = Task(goal="Find the folder named todo, Create a todo application(html,css and js files) with localstorage persistence. Use dark color theme and a switch to switch to light theme with muted colors.")
 
 
 asyncio.run(agent.run(task))
