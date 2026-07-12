@@ -96,7 +96,7 @@ Production-ready experience.
 | Models | Pydantic | Validates LLM responses, typed tool arguments |
 | Browser | Playwright | Screenshots, DOM access, console monitoring |
 | Git | subprocess + git CLI | No extra dependency, battle-tested |
-| CLI | click or argparse | Simple entry point |
+| CLI | click + rich | Interactive prompts, styled output |
 
 ## Project Structure
 
@@ -104,21 +104,29 @@ Production-ready experience.
 nextjs-agent/
 ├── pyproject.toml
 ├── README.md
+├── .env                          # API keys (gitignored)
+├── .nextjs-agent/
+│   └── config.json               # Provider, model settings (gitignored)
 ├── nextjs_agent/
 │   ├── __init__.py
-│   ├── cli.py
-│   ├── config.py
+│   ├── cli.py                    # CLI: init, run
+│   ├── config.py                 # Config management
 │   ├── agent/
 │   │   └── worker.py
 │   ├── tools/
-│   │   ├── base.py
+│   │   ├── base.py               # Tool ABC
 │   │   ├── registry.py
-│   │   ├── file_ops.py
-│   │   └── package_ops.py
+│   │   └── file-ops/
+│   │       ├── ReadFileTool.py
+│   │       ├── WriteFileTool.py
+│   │       ├── EditFileTool.py
+│   │       └── DeleteFileTool.py
 │   ├── snapshots/
 │   │   └── manager.py
 │   └── models/
-│       └── state.py
+│       ├── state.py
+│       ├── task_result.py
+│       └── exceptions.py
 ```
 
 ## Setup
@@ -136,3 +144,31 @@ nextjs-agent
 
 >>> Add a navbar with dark mode toggle
 ```
+
+---
+
+## Development Progress
+
+### Completed
+- [x] Project setup (pyproject.toml, CLI, config)
+- [x] CLI with rich UI (banner, provider table, masked API keys, model picker)
+- [x] Config management (.env for keys, .nextjs-agent/config.json for settings)
+- [x] Multi-provider support (OpenAI, NVIDIA, Anthropic, Ollama, Groq, etc.)
+- [x] Dual API key support (main agent + worker agent, or same key for both)
+- [x] Pydantic models (AgentState, TaskResult, ToolCall, FunctionCall)
+- [x] Tool base class (ABC, abstract execute, resolve_project_path)
+- [x] ReadFileTool (line-based reading, 1-indexed, start/end support)
+- [x] EditFileTool (line-based edit, insert/replace/append, atomic writes, permission preservation)
+
+### In Progress
+- [ ] WriteFileTool
+- [ ] DeleteFileTool
+- [ ] ListDirTool
+
+### Not Started
+- [ ] Package tools (install, uninstall)
+- [ ] Git snapshot manager
+- [ ] LLM client
+- [ ] Worker agent loop
+- [ ] System prompt
+- [ ] Approval flow
