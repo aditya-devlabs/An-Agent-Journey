@@ -1,36 +1,138 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# nextjs-agent
 
-## Getting Started
+An AI agent harness for Next.js projects. Reads, creates, modifies, deletes files, manages packages, and explores repositories — with git-based snapshots for safe approve/discard workflows.
 
-First, run the development server:
+## What It Does
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+You describe what you want built. The agent plans the work, executes it on a git branch, and shows you exactly what changed before you approve.
+
+```
+>>> Add a dark mode toggle
+
+[Git]   Created branch: agent/add-dark-mode
+[Agent] Plan:
+        1. Create DarkModeToggle component
+        2. Integrate into layout.tsx
+        
+        Proceed? [y/n/custom]
+
+>>> y
+
+[Agent] Creating component...
+[Git]   Saved: "Add DarkModeToggle component"
+[Agent] Editing layout.tsx...
+[Git]   Saved: "Integrate DarkModeToggle"
+
+[Done] 2 files changed
+       [View Diff]  [Approve & Merge]  [Discard]
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Versions
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### v1 — Minimum Viable Agent
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Core agent that works on any Next.js project with basic tools and safety via git snapshots.
 
-## Learn More
+| Feature | Description |
+|---|---|
+| Single worker agent | One agent, one task at a time, no orchestrator |
+| LLM integration | OpenAI-compatible API (OpenAI, NVIDIA, Anthropic, Ollama) |
+| File operations | Read, write, edit, delete, list directory |
+| Package management | Install and uninstall npm/pnpm packages |
+| Git snapshots | Branch per task, commit tracking, diff, merge or discard |
+| Approval flow | Show plan before executing, approve/deny/custom input at each step |
+| CLI entry point | `nextjs-agent init`, `nextjs-agent run` |
+| Pydantic models | Typed state and tool arguments |
 
-To learn more about Next.js, take a look at the following resources:
+### v2 — Context & Safety
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Agent gets smarter about context and safer with user control.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Feature | Description |
+|---|---|
+| Orchestrator-worker architecture | Planner breaks goals into tasks, worker executes atomically |
+| Context compaction | Summarize long conversations to stay within token limits |
+| Error recovery | Retry failed tools, adjust approach on failure |
+| Dev server management | Start, stop, health check for `npm run dev` |
+| Type checking | Run `tsc --noEmit`, report errors to agent |
+| Linting | Run eslint, report issues to agent |
+| Next.js route awareness | Understand App Router conventions (page.tsx, layout.tsx, route.ts) |
+| Framework detection | Identify Next.js version, installed packages, config |
 
-## Deploy on Vercel
+### v3 — Visual Preview
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Agent can see what it builds. The x-factor.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Feature | Description |
+|---|---|
+| Browser automation | Playwright-based headless Chromium |
+| Page navigation | Navigate to any route in the running app |
+| Click interactions | Click buttons, links, form elements |
+| Screenshot capture | Visual state at any point |
+| Console monitoring | Catch JS errors, hydration warnings |
+| DOM inspection | Read accessible page structure |
+| Visual diff | Before/after comparison of changes |
+| Live preview panel | See the app running with agent's changes |
+
+### v4 — Session & Polish
+
+Production-ready experience.
+
+| Feature | Description |
+|---|---|
+| Session handling | Save/resume conversations across restarts |
+| Session list | View past sessions, pick one to continue |
+| Auto-save | Don't lose work on crash or exit |
+| Multi-task workflows | Agent handles complex multi-step requests |
+| Streaming responses | Real-time output as agent thinks |
+| Config management | Provider, model, preferences persisted |
+
+## Tech Stack
+
+| Component | Tech | Why |
+|---|---|---|
+| Language | Python | Rich ecosystem, fast iteration |
+| LLM Client | OpenAI SDK | Works with OpenAI, NVIDIA, Anthropic, Ollama |
+| Models | Pydantic | Validates LLM responses, typed tool arguments |
+| Browser | Playwright | Screenshots, DOM access, console monitoring |
+| Git | subprocess + git CLI | No extra dependency, battle-tested |
+| CLI | click or argparse | Simple entry point |
+
+## Project Structure
+
+```
+nextjs-agent/
+├── pyproject.toml
+├── README.md
+├── nextjs_agent/
+│   ├── __init__.py
+│   ├── cli.py
+│   ├── config.py
+│   ├── agent/
+│   │   └── worker.py
+│   ├── tools/
+│   │   ├── base.py
+│   │   ├── registry.py
+│   │   ├── file_ops.py
+│   │   └── package_ops.py
+│   ├── snapshots/
+│   │   └── manager.py
+│   └── models/
+│       └── state.py
+```
+
+## Setup
+
+```bash
+pip install nextjs-agent
+nextjs-agent init
+```
+
+## Usage
+
+```bash
+cd ~/my-nextjs-app
+nextjs-agent
+
+>>> Add a navbar with dark mode toggle
+```

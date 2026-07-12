@@ -1,0 +1,20 @@
+[project]
+name = "nextjs-agent"
+version = "0.1.0"
+description = "An AI agent harness for Next.js projects"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "openai>=2.45.0",
+    "pydantic>=2.13.4",
+    "python-dotenv>=1.2.2",
+    "click>=8.1.0",
+    "rich>=13.0.0",
+]
+
+[project.scripts]
+nextjs-agent = "nextjs_agent.cli:cli"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
