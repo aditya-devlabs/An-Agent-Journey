@@ -1,4 +1,6 @@
 from re import L
+
+
 class WorkerError(Exception):
     """Base exception for worker failures."""
 
@@ -29,3 +31,31 @@ class ToolExecutionError(WorkerError):
 
 class EditFileToolError(WorkerError):
     """Some error occurred while editing the file."""
+
+
+class FileAlreadyExistsError(WorkerError):
+    """File with given path already exists."""
+
+
+class WriteFileToolError(WorkerError):
+    """Error occurred while writing in the file."""
+
+
+class FindAndReplaceToolError(WorkerError):
+    """Error occurred while using find and replace tool."""
+
+
+class DeleteFileToolError(WorkerError):
+    """Error occurred while using deleting the file."""
+
+
+class DirectoryAlreadyExistsError(WorkerError):
+    """Directory with given path already exists."""
+
+
+class CreateDirToolError(WorkerError):
+    """Error occurred while creating the directory."""
+
+
+class ListDirToolError(WorkerError):
+    """Error occurred while traversing the directory."""

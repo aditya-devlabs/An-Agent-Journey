@@ -3,18 +3,18 @@ from nextjs_agent.tools.base import TOOL
 from pydantic import Field, BaseModel
 
 
-class ReadFileArgs(BaseModel):
+class ReadFileToolArgs(BaseModel):
     path: str = Field(description="Path of the file to be read")
     start: int | None = Field(default=1, description="Start line from where the file is to be read. User facing field. 1-indexed")
     end: int | None = Field(default=None, description="End line till where the file is to be read. User facing field. Inclusive, 1-indexed")
 
 class ReadFileTool(TOOL):
     name = "read_file"
-    description = "Reads a file from the project"
+    description = "Read a file's content from the project. Use start/end for line ranges."
 
-    args_schema = ReadFileArgs
+    args_schema = ReadFileToolArgs
 
-    async def execute(self, args: ReadFileArgs):
+    async def execute(self, args: ReadFileToolArgs):
 
         file_path = self.resolve_project_path(args.path)
 
@@ -31,9 +31,10 @@ class ReadFileTool(TOOL):
                 lines =    islice(f, internal_start, internal_end)
 
                 content =  "".join(lines)
-
+                line_count = content.count("\n") + 1
                 return {
-                    "path": args.path,
+                    "success": True,
+                    "summary": f"Read '{args.path}' ({line_count} lines)",
                     "content": content,
                     "modified_files": []
                 }

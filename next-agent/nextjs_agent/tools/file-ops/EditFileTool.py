@@ -21,7 +21,7 @@ class EditFileToolArgs(BaseModel):
 
 class EditFileTool(TOOL):
     name = "edit_file"
-    description = "Edits a file for the given path, start and end line number"
+    description = "Replace, insert, or append content at specific line numbers. Use for structural changes like adding components, inserting imports, or removing code blocks."
 
     args_schema = EditFileToolArgs
 
@@ -76,6 +76,12 @@ class EditFileTool(TOOL):
             
             shutil.copymode(str(file_path), tmp_path)
             os.replace(tmp_path, str(file_path))
+
+            return {
+                    "success": True,
+                    "summary": f"Edited '{args.path}' (lines {args.start}-{args.end})",
+                    "modified_files": [args.path]
+                }
         except EditFileToolError:
             raise
         except Exception as e:
