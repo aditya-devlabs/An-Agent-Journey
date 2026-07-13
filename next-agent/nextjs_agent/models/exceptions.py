@@ -59,3 +59,11 @@ class CreateDirToolError(WorkerError):
 
 class ListDirToolError(WorkerError):
     """Error occurred while traversing the directory."""
+
+
+class AddPackageToolError(WorkerError):
+    """Error occurred while adding the package"""
+
+
+class RemovePackageToolError(WorkerError):
+    """Error occurred while removing the package"""
