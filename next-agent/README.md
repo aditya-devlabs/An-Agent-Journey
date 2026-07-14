@@ -112,29 +112,40 @@ nextjs-agent/
 │   ├── __init__.py
 │   ├── cli.py                        # CLI: init, run
 │   ├── config.py                     # Config management
-│   ├── agent/
-│   │   └── worker.py
+│   ├── agents/
+│   │   ├── __init__.py
+│   │   ├── worker/
+│   │   │   ├── worker_agent.py       # Worker agent executor loop
+│   │   │   ├── worker_client.py      # OpenAI client for worker
+│   │   │   └── worker_sys_prompt.py  # System prompt
+│   │   └── main/
+│   │       └── orchestrator_client.py
 │   ├── tools/
+│   │   ├── __init__.py
 │   │   ├── base.py                   # Tool ABC
-│   │   ├── registry.py
-│   │   ├── file-ops/
+│   │   ├── tools_registry.py         # TOOLS dict + get_tools_schema()
+│   │   ├── file_ops/
 │   │   │   ├── ReadFileTool.py
 │   │   │   ├── WriteFileTool.py
 │   │   │   ├── EditFileTool.py
 │   │   │   ├── DeleteFileTool.py
 │   │   │   └── FindAndReplaceTool.py
-│   │   ├── dir-ops/
+│   │   ├── dir_ops/
 │   │   │   ├── ListDirTool.py
 │   │   │   └── CreateDirTool.py
-│   │   └── package-tools/
+│   │   └── package_tools/
 │   │       ├── detect_manager.py
 │   │       ├── AddPackageTool.py
 │   │       └── RemovePackageTool.py
 │   ├── snapshots/
+│   │   ├── __init__.py
 │   │   └── manager.py
 │   └── models/
+│       ├── __init__.py
 │       ├── state.py
+│       ├── task.py
 │       ├── task_result.py
+│       ├── worker_models.py
 │       └── exceptions.py
 ```
 
@@ -164,7 +175,7 @@ nextjs-agent
 - [x] Config management (.env for keys, .nextjs-agent/config.json for settings)
 - [x] Multi-provider support (OpenAI, NVIDIA, Anthropic, Ollama, Groq, etc.)
 - [x] Dual API key support (main agent + worker agent, or same key for both)
-- [x] Pydantic models (AgentState, TaskResult, ToolCall, FunctionCall)
+- [x] Pydantic models (AgentState, TaskResult, Task, ToolCall, FunctionCall, AssistantResponse)
 - [x] Tool base class (ABC, abstract execute, resolve_project_path)
 - [x] ReadFileTool (line-based reading, 1-indexed, start/end, line count)
 - [x] WriteFileTool (create new, overwrite existing, mode parameter)
@@ -177,13 +188,12 @@ nextjs-agent
 - [x] RemovePackageTool (auto-detect manager, clean removal)
 - [x] detect_manager utility (lock file detection for package managers)
 - [x] All tools return proper responses (success, summary, modified_files)
-
-### In Progress
-- [ ] Tool registry (register all tools, build OpenAI tools schema)
+- [x] Tool registry (TOOLS dict, get_tools_schema for OpenAI function calling)
+- [x] Worker agent loop (executor, LLM calls, tool execution, retry/backoff, error handling)
+- [x] Worker agent system prompt (tool-based, concise, no planning overhead)
 
 ### Not Started
-- [ ] Git snapshot manager
-- [ ] LLM client
-- [ ] Worker agent loop
-- [ ] System prompt
-- [ ] Approval flow
+- [ ] Git snapshot manager (branch per task, commit, diff, merge, discard)
+- [ ] Wire up CLI run command (connect config → LLM client → worker agent)
+- [ ] Approval flow (show plan, approve/deny/custom input, view diff)
+- [ ] Web search tool (reduce hallucination, look up docs/APIs)
