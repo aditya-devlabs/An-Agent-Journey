@@ -37,8 +37,9 @@ Core agent that works on any Next.js project with basic tools and safety via git
 |---|---|
 | Single worker agent | One agent, one task at a time, no orchestrator |
 | LLM integration | OpenAI-compatible API (OpenAI, NVIDIA, Anthropic, Ollama) |
-| File operations | Read, write, edit, delete, list directory |
-| Package management | Install and uninstall npm/pnpm packages |
+| File operations | Read, write, edit, delete, list directory, create directory |
+| Find & Replace | Exact text substitution for renaming, refactoring |
+| Package management | Install and uninstall npm/pnpm/yarn/bun packages |
 | Git snapshots | Branch per task, commit tracking, diff, merge or discard |
 | Approval flow | Show plan before executing, approve/deny/custom input at each step |
 | CLI entry point | `nextjs-agent init`, `nextjs-agent run` |
@@ -104,23 +105,31 @@ Production-ready experience.
 nextjs-agent/
 ├── pyproject.toml
 ├── README.md
-├── .env                          # API keys (gitignored)
+├── .env                              # API keys (gitignored)
 ├── .nextjs-agent/
-│   └── config.json               # Provider, model settings (gitignored)
+│   └── config.json                   # Provider, model settings (gitignored)
 ├── nextjs_agent/
 │   ├── __init__.py
-│   ├── cli.py                    # CLI: init, run
-│   ├── config.py                 # Config management
+│   ├── cli.py                        # CLI: init, run
+│   ├── config.py                     # Config management
 │   ├── agent/
 │   │   └── worker.py
 │   ├── tools/
-│   │   ├── base.py               # Tool ABC
+│   │   ├── base.py                   # Tool ABC
 │   │   ├── registry.py
-│   │   └── file-ops/
-│   │       ├── ReadFileTool.py
-│   │       ├── WriteFileTool.py
-│   │       ├── EditFileTool.py
-│   │       └── DeleteFileTool.py
+│   │   ├── file-ops/
+│   │   │   ├── ReadFileTool.py
+│   │   │   ├── WriteFileTool.py
+│   │   │   ├── EditFileTool.py
+│   │   │   ├── DeleteFileTool.py
+│   │   │   └── FindAndReplaceTool.py
+│   │   ├── dir-ops/
+│   │   │   ├── ListDirTool.py
+│   │   │   └── CreateDirTool.py
+│   │   └── package-tools/
+│   │       ├── detect_manager.py
+│   │       ├── AddPackageTool.py
+│   │       └── RemovePackageTool.py
 │   ├── snapshots/
 │   │   └── manager.py
 │   └── models/
@@ -150,23 +159,29 @@ nextjs-agent
 ## Development Progress
 
 ### Completed
-- [x] Project setup (pyproject.toml, CLI, config)
+- [x] Project setup (pyproject.toml, dependencies, package structure)
 - [x] CLI with rich UI (banner, provider table, masked API keys, model picker)
 - [x] Config management (.env for keys, .nextjs-agent/config.json for settings)
 - [x] Multi-provider support (OpenAI, NVIDIA, Anthropic, Ollama, Groq, etc.)
 - [x] Dual API key support (main agent + worker agent, or same key for both)
 - [x] Pydantic models (AgentState, TaskResult, ToolCall, FunctionCall)
 - [x] Tool base class (ABC, abstract execute, resolve_project_path)
-- [x] ReadFileTool (line-based reading, 1-indexed, start/end support)
+- [x] ReadFileTool (line-based reading, 1-indexed, start/end, line count)
+- [x] WriteFileTool (create new, overwrite existing, mode parameter)
 - [x] EditFileTool (line-based edit, insert/replace/append, atomic writes, permission preservation)
+- [x] FindAndReplaceTool (exact text substitution, replace_all, atomic writes)
+- [x] DeleteFileTool (file deletion with error handling)
+- [x] ListDirTool (recursive listing, depth control, ignore list, include_ignored)
+- [x] CreateDirTool (mkdir -p style, idempotent, error handling)
+- [x] AddPackageTool (auto-detect npm/pnpm/yarn/bun, subprocess execution)
+- [x] RemovePackageTool (auto-detect manager, clean removal)
+- [x] detect_manager utility (lock file detection for package managers)
+- [x] All tools return proper responses (success, summary, modified_files)
 
 ### In Progress
-- [ ] WriteFileTool
-- [ ] DeleteFileTool
-- [ ] ListDirTool
+- [ ] Tool registry (register all tools, build OpenAI tools schema)
 
 ### Not Started
-- [ ] Package tools (install, uninstall)
 - [ ] Git snapshot manager
 - [ ] LLM client
 - [ ] Worker agent loop
