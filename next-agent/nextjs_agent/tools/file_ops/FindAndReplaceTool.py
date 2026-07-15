@@ -21,7 +21,7 @@ class FindAndReplaceToolArgs(BaseModel):
 
 class FindAndReplaceTool(TOOL):
     name = "find_and_replace"
-    description = "Replace exact text in a file. Use for renaming variables, swapping function names, or targeted text substitution."
+    description = "Replace exact text in a file. Use for renaming variables, swapping function names, inserting new content, appending at EOF, or targeted text substitution."
 
     args_schema = FindAndReplaceToolArgs
 
@@ -52,9 +52,6 @@ class FindAndReplaceTool(TOOL):
 
         try:
             with os.fdopen(tmp_fd, "w", encoding="utf-8") as dst:
-
-                if new_content and not new_content.endswith("\n"):
-                    new_content += "\n"
                 dst.write(new_content)
 
             shutil.copymode(str(file_path), tmp_path)

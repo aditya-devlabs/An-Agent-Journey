@@ -7,7 +7,7 @@ from rich.text import Text
 from rich import box
 from pathlib import Path
 
-from nextjs_agent.config import Config, PROVIDERS, DEFAULT_MODELS, PROJECT_ROOT
+from nextjs_agent.config import Config, PROVIDERS, DEFAULT_MODELS, PROJECT_ROOT, PACKAGE_DIR
 
 console = Console()
 
@@ -114,7 +114,7 @@ def setup_keys(config: Config, provider: str) -> bool:
         default=True,
     )
 
-    env_file = PROJECT_ROOT / ".env"
+    env_file = PACKAGE_DIR / ".env"
     lines = env_file.read_text().splitlines() if env_file.exists() else []
 
     def update_env(key: str, value: str):
@@ -185,7 +185,7 @@ def init():
     config.model = model
     config.save()
 
-    env_file = PROJECT_ROOT / ".env"
+    env_file = PACKAGE_DIR / ".env"
     env_lines = env_file.read_text().splitlines() if env_file.exists() else []
     worker_key = ""
     main_key = ""

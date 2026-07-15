@@ -193,7 +193,8 @@ nextjs-agent
 - [x] Worker agent system prompt (tool-based, concise, no planning overhead)
 
 ### Not Started
+- [ ] Provide websearch tool to the model for less hallucinations and more up to date knowledge
+- [ ] Give grep tool to the agent so it becomes easy for it to find files, function names, variables etc in the nextjs repo easily
 - [ ] Git snapshot manager (branch per task, commit, diff, merge, discard)
 - [ ] Wire up CLI run command (connect config → LLM client → worker agent)
 - [ ] Approval flow (show plan, approve/deny/custom input, view diff)
-- [ ] Web search tool (reduce hallucination, look up docs/APIs)

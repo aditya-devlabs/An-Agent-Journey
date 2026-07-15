@@ -6,8 +6,29 @@ import os
 
 load_dotenv()
 
-PROJECT_ROOT = Path.cwd()
-CONFIG_DIR = PROJECT_ROOT / ".nextjs-agent"
+PACKAGE_DIR = Path(__file__).parent.parent  # next-agent/
+
+
+def _find_project_root() -> Path:
+    """Find the Next.js project root by looking for package.json with 'next' dependency."""
+    cwd = Path.cwd()
+
+    # Check cwd first
+    pkg = cwd / "package.json"
+    if pkg.exists() and "next" in pkg.read_text():
+        return cwd
+
+    # Check parent (for when running from next-agent/ subdirectory)
+    pkg = cwd.parent / "package.json"
+    if pkg.exists() and "next" in pkg.read_text():
+        return cwd.parent
+
+    # Fallback to cwd
+    return cwd
+
+
+PROJECT_ROOT = _find_project_root()
+CONFIG_DIR = PACKAGE_DIR / ".nextjs-agent"
 CONFIG_FILE = CONFIG_DIR / "config.json"
 
 PROVIDERS = {
@@ -19,6 +40,7 @@ PROVIDERS = {
     "nvidia": {"base_url": "https://integrate.api.nvidia.com/v1"},
     "ollama": {"base_url": "http://localhost:11434/v1"},
     "openai": {"base_url": "https://api.openai.com/v1"},
+    "openrouter": {"base_url": "https://openrouter.ai/api/v1"},
 }
 
 DEFAULT_MODELS = {
@@ -30,6 +52,7 @@ DEFAULT_MODELS = {
     "nvidia": "openai/gpt-oss-120b",
     "ollama": "llama3.1",
     "openai": "gpt-4o",
+    "openrouter": "tencent/hy3:free",
 }
 
 
@@ -70,7 +93,7 @@ class Config:
             data = json.loads(CONFIG_FILE.read_text())
             return cls(
                 provider=data.get("provider", "openai"),
-                model=data.get("model", ""),
+                model=data.get("model", "openai/gpt-oss-120b"),
                 same_key=data.get("same_key", True),
             )
         except (json.JSONDecodeError, KeyError):

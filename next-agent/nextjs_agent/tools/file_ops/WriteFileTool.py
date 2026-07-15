@@ -36,6 +36,7 @@ class WriteFileTool(TOOL):
         if content and not content.endswith("\n"):
             content += "\n"
         try:
+            file_path.parent.mkdir(parents=True, exist_ok=True)
             with open(file_path, "w", encoding="utf-8") as f:
                 f.write(content)
              

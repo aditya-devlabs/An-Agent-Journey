@@ -1,5 +1,6 @@
 from pydantic import ValidationError
 import json
+import time
 from nextjs_agent.models.worker_models import ToolCall, AssistantResponse
 import asyncio
 from nextjs_agent.models.exceptions import (
@@ -13,13 +14,11 @@ from nextjs_agent.models.exceptions import (
 )
 from nextjs_agent.models.task import Task
 from nextjs_agent.models.task_result import TaskResult
-from nextjs_agent.tools.base import TOOL
-from typing import TypeAlias, Mapping
+from nextjs_agent.tools.tools_registry import get_tools_schema
+from typing import Mapping
 from openai import OpenAI
-from nextjs_agent.agents.worker import worker_sys_prompt
+from nextjs_agent.agents.worker.worker_sys_prompt import worker_sys_prompt
 from nextjs_agent.config import Config
-
-ToolRegistry: TypeAlias = Mapping[str, TOOL]
 
 
 class WorkerAgent:
@@ -27,7 +26,7 @@ class WorkerAgent:
     MAX_RETRIES = 3
     MAX_ITERATIONS = 10
 
-    def __init__(self, llm_client: OpenAI, tool_registry: ToolRegistry, config: Config):
+    def __init__(self, llm_client: OpenAI, tool_registry: dict, config: Config):
 
         self._llm = llm_client
         self._config = config
@@ -56,16 +55,19 @@ class WorkerAgent:
 
     async def _call_llm(self, messages):
         try:
+            print(f"  Sending {len(messages)} messages to LLM...")
             response = await asyncio.to_thread(
                 self._llm.chat.completions.create,
                 messages=messages,
                 model=self._config.get_model(),
+                parallel_tool_calls = True,
                 tools=self._build_tools(),
             )
+            print(f"  LLM returned, finish_reason: {response.choices[0].finish_reason if response.choices else 'N/A'}")
             return response
         except Exception as e:
+            print(f"  LLM exception: {type(e).__name__}: {e}")
             if self._retries < self.MAX_RETRIES and self.is_transient(e):
-                # transient req ke lie there is no need to append the error again and send it to llm, as they are self healing.
                 delay = self._backoff(self._retries)
                 self._retries += 1
                 print(f"LLM error, retrying in {delay}s: {e}")
@@ -76,10 +78,15 @@ class WorkerAgent:
     async def _executor(self, messages):
         modified_files: set[str] = set()
 
-        for _ in range(self.MAX_ITERATIONS):
+        for iteration in range(self.MAX_ITERATIONS):
+            print(f"\n--- Iteration {iteration + 1} ---")
             print("Worker Agent 🤖 (Calling llm)...")
+            start = time.time()
 
             response = await self._call_llm(messages)
+
+            elapsed = time.time() - start
+            print(f"LLM responded in {elapsed:.1f}s")
 
             tool_calls: list[ToolCall] | None = None
             try:
@@ -87,12 +94,23 @@ class WorkerAgent:
                     raise InvalidAssistantResponseError("No choices returned by LLM")
 
                 message = response.choices[0].message
+                print(f"Response role: {message.role}")
+                print(f"Response content: {repr(message.content)}")
+                print(f"Response tool_calls: {message.tool_calls}")
+
                 assistant_response = self._validate_assistant_response(message)
 
+                print(f"Parsed content: {assistant_response.content}")
+
                 if assistant_response.tool_calls is None:
+                    print("No tool calls — task complete.")
                     return message, list(modified_files)
 
                 tool_calls = assistant_response.tool_calls
+
+                print(f"Tool Calls ({len(tool_calls)}):")
+                for tc in tool_calls:
+                    print(f"  - {tc.function.name}({tc.function.arguments})")
 
                 messages.append(
                     {
@@ -127,6 +145,8 @@ class WorkerAgent:
                             "modified_files": [],
                         }
 
+                    print(f"Tool Result [{tc.function.name}]: {result.get('summary', result.get('error', ''))}")
+
                     messages.append(
                         {
                             "role": "tool",
@@ -138,6 +158,7 @@ class WorkerAgent:
                     modified_files.update(result.get("modified_files", []))
 
             except WorkerError as e:
+                print(f"WorkerError: {e}")
                 if self._retries >= self.MAX_RETRIES:
                     raise MaxRetriesExceededError(
                         f"Maximum retries ({self.MAX_RETRIES}) exceeded."
@@ -180,21 +201,7 @@ class WorkerAgent:
         ]
 
     def _build_tools(self) -> list[dict]:
-        tools = []
-
-        for tool in self._tool_registry.values():
-            tools.append(
-                {
-                    "type": "function",
-                    "function": {
-                        "name": tool.name,
-                        "description": tool.description,
-                        "parameters": tool.args_schema.model_json_schema(),
-                    },
-                }
-            )
-
-        return tools
+        return get_tools_schema(self._tool_registry)
 
     async def _execute_tool(self, tool_call: ToolCall) -> dict:
 

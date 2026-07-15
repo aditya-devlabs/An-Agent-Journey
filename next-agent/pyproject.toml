@@ -13,7 +13,7 @@ dependencies = [
 ]
 
 [project.scripts]
-nextjs-agent = "nextjs_agent.cli:cli"
+nextjs_agent = "nextjs_agent.cli:cli"
 
 [build-system]
 requires = ["hatchling"]

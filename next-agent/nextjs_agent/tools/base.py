@@ -1,7 +1,6 @@
 from pathlib import Path
 from pydantic import BaseModel
 from abc import ABC, abstractmethod
-from pydantic import Field
 
 
 class TOOL(ABC):
@@ -10,17 +9,17 @@ class TOOL(ABC):
 
     args_schema: type[BaseModel]
 
+    def __init__(self, project_root: Path):
+        self.project_root = project_root
+
     @abstractmethod
     def execute(self, args):
         pass
 
-    @staticmethod
-    def resolve_project_path(path: str) -> Path:
-        project_root = Path.cwd()
+    def resolve_project_path(self, path: str) -> Path:
+        resolved = (self.project_root / path).resolve()
 
-        resolved = (project_root / path).resolve()
-
-        if project_root not in resolved.parents and resolved != project_root:
+        if self.project_root not in resolved.parents and resolved != self.project_root:
             raise ValueError("Cannot access files outside the project.")
 
         return resolved

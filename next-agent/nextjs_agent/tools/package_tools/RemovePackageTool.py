@@ -1,6 +1,5 @@
 import subprocess
-from nextjs_agent.models.exceptions import AddPackageToolError, RemovePackageToolError
-from pathlib import Path
+from nextjs_agent.models.exceptions import RemovePackageToolError
 from nextjs_agent.tools.base import TOOL
 from pydantic import BaseModel, Field
 from nextjs_agent.tools.package_tools.detect_manager import detect_manager
@@ -22,9 +21,7 @@ class RemovePackageTool(TOOL):
 
     async def execute(self, args: RemovePackageToolArgs):
 
-        project_root = Path.cwd()
-
-        manager = detect_manager(project_root)
+        manager = detect_manager(self.project_root)
 
         cmd = {
             "npm": f"npm uninstall {args.package}",
@@ -38,7 +35,7 @@ class RemovePackageTool(TOOL):
                 shell=True,
                 capture_output=True,
                 text=True,
-                cwd=project_root,
+                cwd=self.project_root,
             )
             if result.returncode != 0:
                 raise Exception(result.stderr)

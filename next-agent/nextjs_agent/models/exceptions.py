@@ -29,10 +29,6 @@ class ToolExecutionError(WorkerError):
     """The requested tool failed during execution."""
 
 
-class EditFileToolError(WorkerError):
-    """Some error occurred while editing the file."""
-
-
 class FileAlreadyExistsError(WorkerError):
     """File with given path already exists."""
 

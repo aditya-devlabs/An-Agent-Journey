@@ -27,11 +27,16 @@ class ReadFileTool(TOOL):
         try:
             with open(file_path, 'r', encoding="utf-8") as f:
                 internal_start = (args.start - 1) if args.start else 0
-                internal_end= args.end + 1 if args.end else None
-                lines =    islice(f, internal_start, internal_end)
+                internal_end = args.end + 1 if args.end else None
+                lines = islice(f, internal_start, internal_end)
 
-                content =  "".join(lines)
-                line_count = content.count("\n") + 1
+                display_start = args.start if args.start else 1
+                numbered = []
+                for i, line in enumerate(lines):
+                    clean_line = line.rstrip("\n")
+                    numbered.append(f"{display_start + i}: {clean_line}")
+                content = "\n".join(numbered)
+                line_count = len(numbered)
                 return {
                     "success": True,
                     "summary": f"Read '{args.path}' ({line_count} lines)",
