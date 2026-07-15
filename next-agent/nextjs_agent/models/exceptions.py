@@ -63,3 +63,7 @@ class AddPackageToolError(WorkerError):
 
 class RemovePackageToolError(WorkerError):
     """Error occurred while removing the package"""
+
+
+class SearchCodeToolError(WorkerError):
+    """Error occurred while searching file contents."""

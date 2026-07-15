@@ -7,6 +7,8 @@ from nextjs_agent.tools.file_ops.DeleteFileTool import DeleteFileTool
 from nextjs_agent.tools.dir_ops.CreateDirTool import CreateDirTool
 from nextjs_agent.tools.dir_ops.ListDirTool import ListDirTool
 
+from nextjs_agent.tools.search.SearchCodeTool import SearchCodeTool
+
 from nextjs_agent.tools.package_tools.AddPackageTool import AddPackageTool
 from nextjs_agent.tools.package_tools.RemovePackageTool import RemovePackageTool
 
@@ -19,6 +21,7 @@ def create_tools(project_root: Path) -> dict:
         "delete_file": DeleteFileTool(project_root),
         "create_dir": CreateDirTool(project_root),
         "list_dir": ListDirTool(project_root),
+        "search_code": SearchCodeTool(project_root),
         "add_package": AddPackageTool(project_root),
         "remove_package": RemovePackageTool(project_root),
     }
