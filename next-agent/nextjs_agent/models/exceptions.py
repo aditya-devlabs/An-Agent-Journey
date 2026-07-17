@@ -21,6 +21,10 @@ class InvalidAssistantResponseError(WorkerError):
     """The assistant response did not match the expected schema."""
 
 
+class InvalidAgentResponseError(WorkerError):
+    """The Orchestrator agent response did not match the expected schema."""
+
+
 class InvalidToolArgumentsError(WorkerError):
     """The tool arguments failed schema validation."""
 

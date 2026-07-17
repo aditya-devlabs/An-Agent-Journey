@@ -13,6 +13,7 @@ class WriteFileToolArgs(BaseModel):
         description="Content to be placed in this newly created file or the content to overwrite the entire file."
     )
     mode: Literal["write", "overwrite"] = Field(
+        default="write",
         description="Tells if the mode is write or overwrite. Use 'write' when file needs to be created. Use 'overwrite' when file needs to be overwritten."
     )
 

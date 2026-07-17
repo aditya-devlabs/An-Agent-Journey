@@ -1,3 +1,6 @@
+import asyncio
+import shutil
+import subprocess
 import click
 from rich.console import Console
 from rich.panel import Panel
@@ -7,7 +10,7 @@ from rich.text import Text
 from rich import box
 from pathlib import Path
 
-from nextjs_agent.config import Config, PROVIDERS, DEFAULT_MODELS, PROJECT_ROOT, PACKAGE_DIR
+from nextjs_agent.config import Config, PROVIDERS, DEFAULT_MODELS, PROJECT_ROOT, PACKAGE_DIR, CONFIG_DIR
 
 console = Console()
 
@@ -217,7 +220,9 @@ def init():
 
 
 @cli.command()
-def run():
+@click.option("--new", is_flag=True, help="Start a new session")
+@click.option("--session", "session_id", default=None, help="Resume a specific session by ID")
+def run(new: bool, session_id: str | None):
     """Start the agent in the current directory."""
     show_banner()
 
@@ -229,11 +234,41 @@ def run():
         )
         return
 
+    from nextjs_agent.sessions import list_sessions
+
+    if not new and not session_id:
+        recent = list_sessions()
+        if recent:
+            console.print("\n[bold]Recent sessions:[/bold]\n")
+            table = Table(box=box.SIMPLE_HEAVY, show_header=False)
+            table.add_column("#", style="bold", width=3)
+            table.add_column("ID", style="dim")
+            table.add_column("Messages", style="dim")
+            table.add_column("Last updated", style="dim")
+            for i, s in enumerate(recent[:5], 1):
+                table.add_row(
+                    str(i),
+                    s["id"][:8] + "...",
+                    str(s["message_count"]),
+                    s["updated_at"][:19].replace("T", " "),
+                )
+            table.add_row("n", "[dim]New session[/dim]", "", "")
+            console.print(table)
+            console.print()
+
+            choice = Prompt.ask(
+                "Select session",
+                default="n",
+            )
+            if choice.lower() != "n" and choice.isdigit() and 1 <= int(choice) <= len(recent):
+                session_id = recent[int(choice) - 1]["id"]
+
     console.print(
         Panel(
             f"  Provider : [cyan]{config.provider}[/cyan]\n"
             f"  Model    : [cyan]{config.get_model()}[/cyan]\n"
-            f"  Project  : [cyan]{PROJECT_ROOT}[/cyan]",
+            f"  Project  : [cyan]{PROJECT_ROOT}[/cyan]"
+            + (f"\n  Session  : [dim]{session_id[:8]}...[/dim]" if session_id else ""),
             title="[bold]Agent Ready[/bold]",
             style="cyan",
             box=box.ROUNDED,
@@ -241,9 +276,136 @@ def run():
     )
     console.print()
 
-    from nextjs_agent.agent.worker import run_worker
+    from nextjs_agent.runner import run_agent
 
-    run_worker(config)
+    asyncio.run(run_agent(config, session_id))
+
+@cli.group()
+def sessions():
+    """List, show, and manage sessions."""
+    pass
+
+
+@sessions.command("list")
+def sessions_list():
+    """Show all saved sessions."""
+    from nextjs_agent.sessions import list_sessions
+
+    all_sessions = list_sessions()
+    if not all_sessions:
+        console.print("[yellow]No sessions found.[/yellow]")
+        return
+
+    table = Table(box=box.SIMPLE_HEAVY, show_header=True, header_style="bold cyan")
+    table.add_column("Session ID", style="bold")
+    table.add_column("Messages", style="dim")
+    table.add_column("Created", style="dim")
+    table.add_column("Last updated", style="dim")
+
+    for s in all_sessions:
+        table.add_row(
+            s["id"][:8],
+            str(s["message_count"]),
+            s["created_at"][:19].replace("T", " "),
+            s["updated_at"][:19].replace("T", " "),
+        )
+
+    console.print(table)
+    console.print(f"  [dim]Full IDs (copy-paste):[/dim]")
+    for s in all_sessions:
+        console.print(f"    {s['id']}")
+    console.print(f"\n  [dim]{len(all_sessions)} session(s)[/dim]")
+
+
+@sessions.command("show")
+@click.argument("session_id")
+def sessions_show(session_id: str):
+    """Show messages in a session."""
+    from nextjs_agent.sessions import load_session
+
+    session = load_session(session_id)
+    if not session:
+        console.print(f"[red]Session '{session_id}' not found.[/red]")
+        return
+
+    for msg in session.get("messages", []):
+        role = msg.get("role", "unknown")
+        content = (msg.get("content") or "")[:500]
+        if role == "system":
+            continue
+        color = {"user": "green", "assistant": "cyan"}.get(role, "white")
+        console.print(f"  [[{color}]{role}[/{color}]] {content}")
+
+
+@sessions.command("delete")
+@click.argument("session_id")
+def sessions_delete(session_id: str):
+    """Delete a session."""
+    from nextjs_agent.sessions import delete_session
+
+    if Confirm.ask(f"  Delete session '{session_id[:8]}...'?", default=False):
+        if delete_session(session_id):
+            console.print("[green]Deleted.[/green]")
+        else:
+            console.print(f"[red]Session '{session_id}' not found.[/red]")
+
+
+@cli.command()
+def uninstall():
+    """Remove nextjs-agent configuration and session files."""
+    show_banner()
+
+    removed = []
+
+    if CONFIG_DIR.exists() or (PACKAGE_DIR / ".env").exists():
+        console.print(
+            Panel(
+                "This will remove:\n"
+                f"  [red]• {CONFIG_DIR}[/red]  (config, sessions)\n"
+                f"  [red]• {PACKAGE_DIR / '.env'}[/red]  (API keys)\n\n"
+                "[dim]Your project files will not be affected.[/dim]",
+                title="[bold red]Remove Configuration[/bold red]",
+                style="red",
+                box=box.ROUNDED,
+            )
+        )
+
+        if Confirm.ask("\n  Remove configuration?", default=False):
+            if CONFIG_DIR.exists():
+                shutil.rmtree(CONFIG_DIR)
+                removed.append(str(CONFIG_DIR))
+
+            env_file = PACKAGE_DIR / ".env"
+            if env_file.exists():
+                env_file.unlink()
+                removed.append(str(env_file))
+
+    if Confirm.ask("\n  Uninstall pip package?", default=False):
+        result = subprocess.run(
+            ["pip", "uninstall", "nextjs-agent", "-y"],
+            capture_output=True, text=True
+        )
+        if result.returncode == 0:
+            removed.append("pip package: nextjs-agent")
+            console.print(f"  [dim]{result.stdout.strip()}[/dim]")
+        else:
+            console.print(f"  [red]Failed: {result.stderr.strip()}[/red]")
+            return
+
+    if not removed:
+        console.print("[yellow]Nothing to remove.[/yellow]")
+        return
+
+    console.print()
+    console.print(
+        Panel(
+            "\n".join(f"  [red]✗[/red] {path}" for path in removed),
+            title="[bold green]Removed[/bold green]",
+            style="green",
+            box=box.ROUNDED,
+        )
+    )
+    console.print("\n[bold green]Done.[/bold green]")
 
 
 if __name__ == "__main__":

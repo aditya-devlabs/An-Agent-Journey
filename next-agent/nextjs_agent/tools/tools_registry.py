@@ -12,6 +12,9 @@ from nextjs_agent.tools.search.SearchCodeTool import SearchCodeTool
 from nextjs_agent.tools.package_tools.AddPackageTool import AddPackageTool
 from nextjs_agent.tools.package_tools.RemovePackageTool import RemovePackageTool
 
+from nextjs_agent.tools.skill_tools.ListSkillsTool import ListSkillsTool
+from nextjs_agent.tools.skill_tools.ReadSkillTool import ReadSkillTool
+
 
 def create_tools(project_root: Path) -> dict:
     return {
@@ -24,6 +27,8 @@ def create_tools(project_root: Path) -> dict:
         "search_code": SearchCodeTool(project_root),
         "add_package": AddPackageTool(project_root),
         "remove_package": RemovePackageTool(project_root),
+        "list_skills": ListSkillsTool(project_root),
+        "read_skill": ReadSkillTool(project_root),
     }
 
 

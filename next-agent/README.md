@@ -31,19 +31,18 @@ You describe what you want built. The agent plans the work, executes it on a git
 
 ### v1 — Minimum Viable Agent
 
-Core agent that works on any Next.js project with basic tools and safety via git snapshots.
+Core agent that works on any Next.js project with basic tools and orchestration.
 
 | Feature | Description |
 |---|---|
-| Single worker agent | One agent, one task at a time, no orchestrator |
+| Orchestrator-worker architecture | Planner explores codebase, delegates writes to worker |
+| Worker agent | Executes tasks with retry/backoff, error handling |
 | LLM integration | OpenAI-compatible API (OpenAI, NVIDIA, Anthropic, Ollama) |
-| File operations | Read, write, edit, delete, list directory, create directory |
-| Find & Replace | Exact text substitution for renaming, refactoring |
+| File operations | Read, write, find & replace, delete, list directory, create directory |
+| Code search | Cross-project grep with regex, context lines, file filters |
 | Package management | Install and uninstall npm/pnpm/yarn/bun packages |
-| Git snapshots | Branch per task, commit tracking, diff, merge or discard |
-| Approval flow | Show plan before executing, approve/deny/custom input at each step |
 | CLI entry point | `nextjs-agent init`, `nextjs-agent run` |
-| Pydantic models | Typed state and tool arguments |
+| Pydantic models | Typed state, tool arguments, LLM responses |
 
 ### v2 — Context & Safety
 
@@ -51,14 +50,15 @@ Agent gets smarter about context and safer with user control.
 
 | Feature | Description |
 |---|---|
-| Orchestrator-worker architecture | Planner breaks goals into tasks, worker executes atomically |
+| Persistent memory | Remember decisions and context across tasks in a session |
 | Context compaction | Summarize long conversations to stay within token limits |
+| Context memory display | Show how much context has been filled |
+| Git snapshots | Branch per task, commit tracking, diff, merge or discard |
+| Approval flow | Show plan before executing, approve/deny/custom input |
 | Error recovery | Retry failed tools, adjust approach on failure |
 | Dev server management | Start, stop, health check for `npm run dev` |
 | Type checking | Run `tsc --noEmit`, report errors to agent |
 | Linting | Run eslint, report issues to agent |
-| Next.js route awareness | Understand App Router conventions (page.tsx, layout.tsx, route.ts) |
-| Framework detection | Identify Next.js version, installed packages, config |
 
 ### v3 — Visual Preview
 
@@ -73,7 +73,6 @@ Agent can see what it builds. The x-factor.
 | Console monitoring | Catch JS errors, hydration warnings |
 | DOM inspection | Read accessible page structure |
 | Visual diff | Before/after comparison of changes |
-| Live preview panel | See the app running with agent's changes |
 
 ### v4 — Session & Polish
 
@@ -86,7 +85,7 @@ Production-ready experience.
 | Auto-save | Don't lose work on crash or exit |
 | Multi-task workflows | Agent handles complex multi-step requests |
 | Streaming responses | Real-time output as agent thinks |
-| Config management | Provider, model, preferences persisted |
+| Web search | Tavily/Firecrawl integration for real-time knowledge |
 
 ## Tech Stack
 
@@ -111,42 +110,45 @@ nextjs-agent/
 ├── nextjs_agent/
 │   ├── __init__.py
 │   ├── cli.py                        # CLI: init, run
-│   ├── config.py                     # Config management
+│   ├── config.py                     # Config management, provider detection
 │   ├── agents/
 │   │   ├── __init__.py
-│   │   ├── worker/
-│   │   │   ├── worker_agent.py       # Worker agent executor loop
-│   │   │   ├── worker_client.py      # OpenAI client for worker
-│   │   │   └── worker_sys_prompt.py  # System prompt
-│   │   └── main/
-│   │       └── orchestrator_client.py
+│   │   ├── orchestrator/
+│   │   │   ├── __init__.py
+│   │   │   ├── orchestrator_agent.py      # ReACT loop, JSON response, delegation
+│   │   │   ├── orchestrator_client.py     # OpenAI client for orchestrator
+│   │   │   └── orchestrator_sys_prompt.py # Planner + delegator prompt
+│   │   └── worker/
+│   │       ├── __init__.py
+│   │       ├── worker_agent.py            # Executor loop, tool execution
+│   │       ├── worker_client.py           # OpenAI client for worker
+│   │       └── worker_sys_prompt.py       # Tool-based execution prompt
 │   ├── tools/
 │   │   ├── __init__.py
-│   │   ├── base.py                   # Tool ABC
-│   │   ├── tools_registry.py         # TOOLS dict + get_tools_schema()
+│   │   ├── base.py                        # Tool ABC, resolve_project_path
+│   │   ├── tools_registry.py              # create_tools, create_read_only_tools
 │   │   ├── file_ops/
-│   │   │   ├── ReadFileTool.py
-│   │   │   ├── WriteFileTool.py
-│   │   │   ├── EditFileTool.py
-│   │   │   ├── DeleteFileTool.py
-│   │   │   └── FindAndReplaceTool.py
+│   │   │   ├── ReadFileTool.py            # Line-based reading with line numbers
+│   │   │   ├── WriteFileTool.py           # Create/overwrite files
+│   │   │   ├── FindAndReplaceTool.py      # Exact text substitution
+│   │   │   └── DeleteFileTool.py          # File deletion
 │   │   ├── dir_ops/
-│   │   │   ├── ListDirTool.py
-│   │   │   └── CreateDirTool.py
+│   │   │   ├── ListDirTool.py             # Recursive listing, depth control
+│   │   │   └── CreateDirTool.py           # mkdir -p style
+│   │   ├── search/
+│   │   │   └── SearchCodeTool.py          # Cross-project grep, regex, context
 │   │   └── package_tools/
-│   │       ├── detect_manager.py
-│   │       ├── AddPackageTool.py
-│   │       └── RemovePackageTool.py
-│   ├── snapshots/
-│   │   ├── __init__.py
-│   │   └── manager.py
+│   │       ├── detect_manager.py          # Lock file detection
+│   │       ├── AddPackageTool.py          # Install packages
+│   │       └── RemovePackageTool.py       # Remove packages
 │   └── models/
 │       ├── __init__.py
-│       ├── state.py
-│       ├── task.py
-│       ├── task_result.py
-│       ├── worker_models.py
-│       └── exceptions.py
+│       ├── state.py                       # AgentState
+│       ├── task.py                        # Task model (goal, context, relevant_files)
+│       ├── task_result.py                 # TaskResult (success, summary, modified_files)
+│       ├── orchestrator_response.py       # OrchestratorResponse (thought, action, tool_calls)
+│       ├── worker_models.py               # FunctionCall, ToolCall, AssistantResponse
+│       └── exceptions.py                  # All custom exceptions
 ```
 
 ## Setup
@@ -170,31 +172,55 @@ nextjs-agent
 ## Development Progress
 
 ### Completed
+
+#### Core Infrastructure
 - [x] Project setup (pyproject.toml, dependencies, package structure)
 - [x] CLI with rich UI (banner, provider table, masked API keys, model picker)
 - [x] Config management (.env for keys, .nextjs-agent/config.json for settings)
 - [x] Multi-provider support (OpenAI, NVIDIA, Anthropic, Ollama, Groq, etc.)
-- [x] Dual API key support (main agent + worker agent, or same key for both)
-- [x] Pydantic models (AgentState, TaskResult, Task, ToolCall, FunctionCall, AssistantResponse)
+- [x] Dual API key support (orchestrator + worker agent, or same key for both)
+
+#### Models
+- [x] AgentState (task, messages, branch, status, modified_files, error)
+- [x] Task (goal, context, relevant_files)
+- [x] TaskResult (success, summary, modified_files, error)
+- [x] OrchestratorResponse (thought, action, tool_calls, delegate_task, final_answer)
+- [x] FunctionCall, ToolCall, AssistantResponse (worker models)
+- [x] All custom exceptions (WorkerError, ToolExecutionError, etc.)
+
+#### Tools
 - [x] Tool base class (ABC, abstract execute, resolve_project_path)
-- [x] ReadFileTool (line-based reading, 1-indexed, start/end, line count)
+- [x] ReadFileTool (line-based reading, 1-indexed, line numbers in output)
 - [x] WriteFileTool (create new, overwrite existing, mode parameter)
-- [x] EditFileTool (line-based edit, insert/replace/append, atomic writes, permission preservation)
-- [x] FindAndReplaceTool (exact text substitution, replace_all, atomic writes)
+- [x] FindAndReplaceTool (exact text substitution, replace_all)
 - [x] DeleteFileTool (file deletion with error handling)
-- [x] ListDirTool (recursive listing, depth control, ignore list, include_ignored)
-- [x] CreateDirTool (mkdir -p style, idempotent, error handling)
-- [x] AddPackageTool (auto-detect npm/pnpm/yarn/bun, subprocess execution)
+- [x] ListDirTool (recursive listing, depth control, ignore list)
+- [x] CreateDirTool (mkdir -p style, idempotent)
+- [x] SearchCodeTool (cross-project grep, regex, context lines, file filters, max_matches_per_file)
+- [x] AddPackageTool (auto-detect npm/pnpm/yarn/bun)
 - [x] RemovePackageTool (auto-detect manager, clean removal)
-- [x] detect_manager utility (lock file detection for package managers)
-- [x] All tools return proper responses (success, summary, modified_files)
-- [x] Tool registry (TOOLS dict, get_tools_schema for OpenAI function calling)
+- [x] detect_manager utility (lock file detection)
+- [x] Tool registry (create_tools, create_read_only_tools, get_tools_schema)
+
+#### Agents
 - [x] Worker agent loop (executor, LLM calls, tool execution, retry/backoff, error handling)
-- [x] Worker agent system prompt (tool-based, concise, no planning overhead)
+- [x] Worker system prompt (tool-based, concise, find_and_replace editing pattern)
+- [x] Orchestrator agent (ReACT loop, JSON response, delegation to worker)
+- [x] Orchestrator system prompt (planner + delegator, read-only tools)
+
+### In Progress
+- [ ] CLI `run` command (connect orchestrator → worker → user)
 
 ### Not Started
-- [ ] Provide websearch tool to the model for less hallucinations and more up to date knowledge
-- [ ] Give grep tool to the agent so it becomes easy for it to find files, function names, variables etc in the nextjs repo easily
+- [ ] Persistent memory (remember decisions across tasks)
+- [ ] Context compaction (summarize long conversations)
+- [ ] Context memory display (show token usage)
 - [ ] Git snapshot manager (branch per task, commit, diff, merge, discard)
-- [ ] Wire up CLI run command (connect config → LLM client → worker agent)
-- [ ] Approval flow (show plan, approve/deny/custom input, view diff)
+- [ ] Approval flow (show plan, approve/deny, view diff)
+
+### Deferred (v2+)
+- [ ] Web search tool (Tavily/Firecrawl integration)
+- [ ] Dev server management
+- [ ] Type checking / linting integration
+- [ ] Browser automation (Playwright)
+- [ ] Session handling

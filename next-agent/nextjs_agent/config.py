@@ -30,6 +30,7 @@ def _find_project_root() -> Path:
 PROJECT_ROOT = _find_project_root()
 CONFIG_DIR = PACKAGE_DIR / ".nextjs-agent"
 CONFIG_FILE = CONFIG_DIR / "config.json"
+SESSIONS_DIR = CONFIG_DIR / "sessions"
 
 PROVIDERS = {
     "anthropic": {"base_url": "https://api.anthropic.com/v1"},
