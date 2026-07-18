@@ -42,27 +42,52 @@ The orchestrator has no tools — it only plans. The worker has 11 tools and doe
 
 ## Setup
 
-### 1. Clone
+### 1. Go inside your Next.js repo
 
 ```bash
-git clone https://github.com/your-username/nextjs-agent.git
+cd ~/my-nextjs-app
+```
+
+### 2. Clone
+
+```bash
+git clone https://github.com/aditya-devlabs/An-Agent-Journey/tree/main/next-agent
 cd nextjs-agent
 ```
 
-### 2. Create virtual environment
+### 3. Create virtual environment
+
+**Linux/macOS:**
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-### 3. Install
+**Windows:**
+
+```bash
+python3 -m venv .venv
+.venv\Scripts\activate
+```
+
+
+
+### 4. Install
+
+**Using pip:**
 
 ```bash
 pip install -e .
 ```
 
-### 4. Configure
+**Using uv:**
+
+```bash
+uv sync
+```
+
+### 5. Configure
 
 ```bash
 nextjs_agent init
