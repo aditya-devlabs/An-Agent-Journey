@@ -1,6 +1,7 @@
 import asyncio
 import shutil
 import subprocess
+import sys
 import click
 from rich.console import Console
 from rich.panel import Panel
@@ -352,59 +353,44 @@ def sessions_delete(session_id: str):
 
 @cli.command()
 def uninstall():
-    """Remove nextjs-agent configuration and session files."""
+    """Remove the next-agent directory completely."""
     show_banner()
 
-    removed = []
-
-    if CONFIG_DIR.exists() or (PACKAGE_DIR / ".env").exists():
+    # Safety check: ensure we're removing the right directory
+    if not PACKAGE_DIR.name.endswith("next-agent"):
         console.print(
-            Panel(
-                "This will remove:\n"
-                f"  [red]• {CONFIG_DIR}[/red]  (config, sessions)\n"
-                f"  [red]• {PACKAGE_DIR / '.env'}[/red]  (API keys)\n\n"
-                "[dim]Your project files will not be affected.[/dim]",
-                title="[bold red]Remove Configuration[/bold red]",
-                style="red",
-                box=box.ROUNDED,
-            )
+            f"[red]Error: Expected 'next-agent' directory, got '{PACKAGE_DIR.name}'. Aborting.[/red]"
         )
-
-        if Confirm.ask("\n  Remove configuration?", default=False):
-            if CONFIG_DIR.exists():
-                shutil.rmtree(CONFIG_DIR)
-                removed.append(str(CONFIG_DIR))
-
-            env_file = PACKAGE_DIR / ".env"
-            if env_file.exists():
-                env_file.unlink()
-                removed.append(str(env_file))
-
-    if Confirm.ask("\n  Uninstall pip package?", default=False):
-        result = subprocess.run(
-            ["pip", "uninstall", "nextjs-agent", "-y"],
-            capture_output=True, text=True
-        )
-        if result.returncode == 0:
-            removed.append("pip package: nextjs-agent")
-            console.print(f"  [dim]{result.stdout.strip()}[/dim]")
-        else:
-            console.print(f"  [red]Failed: {result.stderr.strip()}[/red]")
-            return
-
-    if not removed:
-        console.print("[yellow]Nothing to remove.[/yellow]")
         return
 
-    console.print()
+    if not PACKAGE_DIR.exists():
+        console.print("[yellow]next-agent directory not found.[/yellow]")
+        return
+
     console.print(
         Panel(
-            "\n".join(f"  [red]✗[/red] {path}" for path in removed),
-            title="[bold green]Removed[/bold green]",
-            style="green",
+            f"This will completely remove:\n\n"
+            f"  [red]{PACKAGE_DIR}[/red]\n\n"
+            f"[dim]This includes: venv, config, sessions, scripts, all files.[/dim]\n"
+            f"[dim]Your Next.js project files will not be affected.[/dim]",
+            title="[bold red]Remove next-agent[/bold red]",
+            style="red",
             box=box.ROUNDED,
         )
     )
+
+    if Confirm.ask("\n  Remove next-agent directory?", default=False):
+        shutil.rmtree(PACKAGE_DIR)
+        console.print(
+            Panel(
+                f"  [green]✓[/green] Removed {PACKAGE_DIR}",
+                title="[bold green]Done[/bold green]",
+                style="green",
+                box=box.ROUNDED,
+            )
+        )
+    else:
+        console.print("[yellow]Cancelled.[/yellow]")
     console.print("\n[bold green]Done.[/bold green]")
 
 

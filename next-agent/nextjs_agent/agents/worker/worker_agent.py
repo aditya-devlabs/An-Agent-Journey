@@ -33,9 +33,16 @@ class WorkerAgent:
         self._tool_registry = tool_registry
         self._retries = 0
 
-    async def run(self, task: Task) -> TaskResult:
+    async def run(
+        self,
+        task: Task,
+        previous_context: list[str] | None = None,
+        project_tree: str | None = None,
+    ) -> TaskResult:
 
-        messages: list[dict[str, object]] = self._build_messages(task)
+        messages: list[dict[str, object]] = self._build_messages(
+            task, previous_context, project_tree
+        )
 
         try:
             message, modified_files = await self._executor(messages)
@@ -134,11 +141,6 @@ class WorkerAgent:
                     try:
                         result = await self._execute_tool(tc)
                     except Exception as e:
-                        self._retries += 1
-                        if self._retries >= self.MAX_RETRIES:
-                            raise MaxRetriesExceededError(
-                                f"Maximum retries ({self.MAX_RETRIES}) exceeded."
-                            )
                         result = {
                             "success": False,
                             "error": str(e),
@@ -178,7 +180,12 @@ class WorkerAgent:
 
         raise MaxIterationsExceededError("Maximum iterations exceeded.")
 
-    def _build_messages(self, task: Task) -> list[dict]:
+    def _build_messages(
+        self,
+        task: Task,
+        previous_context: list[str] | None = None,
+        project_tree: str | None = None,
+    ) -> list[dict]:
 
         user_prompt = f"Goal:\n{task.goal}"
 
@@ -188,6 +195,13 @@ class WorkerAgent:
         if task.relevant_files:
             user_prompt += "\nRelevant Files:\n"
             user_prompt += "\n".join(f"- {file}" for file in task.relevant_files)
+
+        if project_tree:
+            user_prompt += f"\n\nProject structure:\n{project_tree}"
+
+        if previous_context:
+            user_prompt += "\n\nPrevious work in this session:\n"
+            user_prompt += "\n".join(f"- {item}" for item in previous_context)
 
         return [
             {
