@@ -2,6 +2,10 @@
 
 Site Entirely created by this agent harness : [Coffee Site](https://origin-roast-coffee-site.vercel.app/)
 
+# 🎥 Project Walkthrough & Demo
+
+[![Demo](https://res.cloudinary.com/dlvcibxgx/video/upload/so_0/v1784535909/nextjs-agent-harness.jpg)](https://res.cloudinary.com/dlvcibxgx/video/upload/v1784535909/nextjs-agent-harness.mp4)
+
 A toy project to learn how agent harnesses work. Orchestrator-worker architecture for Next.js projects — you describe what you want, the agent plans and executes it.
 
 Built to understand how AI coding agents work under the hood. Feel free to try it out if you're curious.
